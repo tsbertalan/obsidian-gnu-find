@@ -228,7 +228,11 @@ class GNUSearchResultsModal extends SuggestModal<SearchResult> {
 	}
 
 	renderSuggestion(suggestion: SearchResult, el: HTMLElement) {
-		el.createEl("div", {text: suggestion.path});
+		const basename = path2.basename(suggestion.path);
+		// Remove the final ".md" from the basename.
+		const basename_no_ext = basename.substr(0, basename.length - 3);
+		el.createEl("div", {text: basename_no_ext});
+		// el.createEl("small", {text: suggestion.path});
 	}
 
 	onChooseSuggestion(suggestion: SearchResult, evt: MouseEvent | KeyboardEvent) {
