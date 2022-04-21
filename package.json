@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "GNU Find",
 	"version": "1.0.1",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "This plugin uses GNU find to search for markdown files below the vault root.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
