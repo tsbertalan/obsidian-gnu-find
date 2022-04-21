@@ -37,6 +37,18 @@ async function search(base_directory: string, query: string) {
 			// Put the results into the results object.
 			resolve(data.toString());
 		});
+		
+		// Listen for the 'error' event, and print it.
+		child.on('error', (err) => {
+			console.log(err);
+			reject(err);
+		});
+
+		// Listen for the 'close' event, and resolve the promise.
+		child.on('close', () => {
+			resolve("");
+		});
+		
 	});
 
 	// Return the results.
@@ -129,13 +141,28 @@ class SearchQuery extends Modal {
 
 	onOpen() {
 		const {contentEl} = this;
-		contentEl.setText('Search for: ');
+		contentEl.createEl("p", {text: "Search for a string in titles of markdown files."});
+		
+		// Make a centered div.
+		const centered_holder = contentEl.createEl("center");
 
-		const inputEl = document.createElement('input');
-		inputEl.setAttribute('type', 'text');
-		inputEl.setAttribute('placeholder', 'query');
-		inputEl.setAttribute('id', 'query-input');
-		contentEl.append(inputEl);
+		// Make a one-row table with two columns to put the input and the button.
+		const table = centered_holder.createEl("table");
+		const row = table.createEl("tr");
+		const col1 = row.createEl("td");
+		// Some spacer columns. I'm really bad at HTML.
+		row.createEl("td");
+		row.createEl("td");
+		row.createEl("td");
+		row.createEl("td");
+		const col2 = row.createEl("td");
+
+		// Make a text input in the div.
+		const inputEl = col1.createEl('input', {
+			type: 'text',
+			placeholder: 'query',
+			id: 'query-input'
+		});
 
 		// Put the focus in the input field.
 		inputEl.focus();
@@ -146,13 +173,17 @@ class SearchQuery extends Modal {
 				this.doSearch();
 			}
 		});
-		
+
 		// Add a search button.
-		const buttonEl = document.createElement('button');
-		buttonEl.setAttribute('type', 'button');
-		buttonEl.setText('Search');
-		buttonEl.setAttribute('id', 'search-button');
-		contentEl.append(buttonEl);
+		const buttonEl = col2.createEl('button', {
+			text: 'Search',
+			id: 'search-button',
+			type: 'button'
+		});
+		// buttonEl.setAttribute('type', 'button');
+		// buttonEl.setText('Search');
+		// buttonEl.setAttribute('id', 'search-button');
+		// contentEl.append(buttonEl);
 
 		// Make the button try the search.
 		buttonEl.addEventListener('click', () => {
@@ -171,7 +202,7 @@ class SearchQuery extends Modal {
 		if (query) {
 	
 			// Display a notice.
-			new Notice(`Searching for "${query}"`);
+			new Notice(`Searching for "${query}" ...`);
 			const base_directory = this.app.vault.adapter.basePath;
 	
 			// Search for the query.
@@ -184,13 +215,21 @@ class SearchQuery extends Modal {
 				const nonEmptyLines = lines.filter((line) => line.length > 0);
 
 				// If there are more than one result, launch a GNUSearchResultsModal.
+				console.log(`Found ${nonEmptyLines.length} results for "${query}".`);
+				new Notice(`Found ${nonEmptyLines.length} results for "${query}".`);
 				if (nonEmptyLines.length > 1) {
 					new GNUSearchResultsModal(this.app, query, nonEmptyLines).open();
 				} else {
-					// Otherwise, open the file.
-					openFileByPath(this.app, nonEmptyLines[0]);
+					// If there is only one result, open the file.
+					if (nonEmptyLines.length === 1) {
+						openFileByPath(this.app, nonEmptyLines[0]);
+					} else {
+						// If there are no results, display a notice.
+						console.log(`No results for "${query}"`);
+					}
 				}
 			});
+
 		} else {
 			new Notice('Please enter a query.');
 		}
