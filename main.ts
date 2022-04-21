@@ -7,6 +7,7 @@ const path2 = require('path');
 // Load the child_process module.
 const child_process = require('child_process');
 
+
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
@@ -24,11 +25,15 @@ async function search(base_directory: string, query: string) {
 
 	
 	// Spawn a child process.
-	const child = child_process.spawn('/usr/bin/find', [
+	const child = child_process.spawn('/usr/bin/env', [
+		'python3',
+		'/home/tsbertalan/bin/ffg_onelineperresult.py',
 		base_directory,
-		"-iname",
-		"*" + query + "*.md",
+		query,
+		'md'
 	]);
+
+	
 
 	// Use async/await to get the results.
 	const results = await new Promise((resolve, reject) => {
@@ -173,6 +178,8 @@ class SearchQuery extends Modal {
 				this.doSearch();
 			}
 		});
+
+		// TODO: Add a checkbox to switch between filenames-only and filenames-and-contents.
 
 		// Add a search button.
 		const buttonEl = col2.createEl('button', {
