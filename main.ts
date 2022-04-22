@@ -115,9 +115,14 @@ export default class GNUFind extends Plugin {
 			}
 		});
 
+		// Run some other no-input scripts I want to use from Obsidian frequently.
+		this.addCommand({
+			id: 'add-day-links',
+			name: 'Add day links',
+			callback: () => {
+				child_process.spawn('/home/tsbertalan/bin/add_day_links', []);
 			}
 		});
-
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
@@ -149,32 +154,40 @@ class SearchQuery extends Modal {
 
 	onOpen() {
 		const {contentEl} = this;
-		contentEl.createEl("p", {text: "Search for a string in titles of markdown files."});
+		const checked_text   = "Search for a string in titles and contents of markdown files.";
+		const unchecked_text = "Search for a string in titles of markdown files.";
+
+		// Give the contentEl a minimum width.
+		contentEl.setAttribute('style', 'min-width: 600px;');
+
+		var instructions_p = contentEl.createEl("p", {
+			text: checked_text
+		});
+		// Use a centered style	
+		instructions_p.setAttribute('style', 'text-align: center;');
 		
 		// Make a centered div.
 		const centered_holder = contentEl.createEl("center");
 
-		// Make a one-row table with two columns to put the input and the button.
+		// Make a one-row table with some columns to put the input, checkbox, and button.
 		const table = centered_holder.createEl("table");
 		const row = table.createEl("tr");
 		const col1 = row.createEl("td");
-		// Some spacer columns. I'm really bad at HTML.
-		row.createEl("td");
-		row.createEl("td");
-		row.createEl("td");
-		row.createEl("td");
+		col1.setAttribute('style', 'padding: 10px;');
 		const col2 = row.createEl("td");
+		col2.setAttribute('style', 'padding: 10px;');
+		const col3 = row.createEl("td");
+		col3.setAttribute('style', 'padding: 10px;');
 
-		// Make a text input in the div.
+
+		// Make a text input.
 		const inputEl = col1.createEl('input', {
 			type: 'text',
 			placeholder: 'query',
 			id: 'query-input'
 		});
-
 		// Put the focus in the input field.
 		inputEl.focus();
-
 		// Make the enter key also submit the form.
 		inputEl.addEventListener('keydown', (evt: KeyboardEvent) => {
 			if (evt.keyCode === 13) {
@@ -182,29 +195,34 @@ class SearchQuery extends Modal {
 			}
 		});
 
-		// TODO: Add a checkbox to switch between filenames-only and filenames-and-contents.
+
 		// Add a checkbox for full-search text.
 		const full_search_checkbox = col2.createEl('input', {
 			type: 'checkbox',
 			id: 'full-search-checkbox',
 		});
+		full_search_checkbox.setAttribute('style', 'vertical-align: text-top;')
+		// Make switching the checkbox change the instructions text.
+		full_search_checkbox.addEventListener('change', (evt: Event) => {
+			if (full_search_checkbox.checked) {
+				instructions_p.innerText = checked_text;
+			} else {
+				instructions_p.innerText = unchecked_text;
+			}
+		});
 		full_search_checkbox.setAttribute('checked', true)
 		col2.createEl('label', {
 			text: 'Full text?',
-			for: 'full-search-checkbox'
+			for: 'full-search-checkbox',
 		});
 
+
 		// Add a search button.
-		const buttonEl = centered_holder.createEl('button', {
+		const buttonEl = col3.createEl('button', {
 			text: 'Search',
 			id: 'search-button',
 			type: 'button'
 		});
-		// buttonEl.setAttribute('type', 'button');
-		// buttonEl.setText('Search');
-		// buttonEl.setAttribute('id', 'search-button');
-		// contentEl.append(buttonEl);
-
 		// Make the button try the search.
 		buttonEl.addEventListener('click', () => {
 			const full_search = full_search_checkbox.checked;
