@@ -3,7 +3,7 @@
 	"name": "GNU Find",
 	"version": "1.0.1",
 	"minAppVersion": "0.12.0",
-	"description": "This plugin uses GNU find to search for markdown files below the vault root.",
+	"description": "Use GNU find to search for markdown files below the vault root.",
 	"author": "Tom Bertalan",
 	"authorUrl": "http://tomsb.net",
 	"isDesktopOnly": false

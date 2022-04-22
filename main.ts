@@ -8,15 +8,15 @@ const path2 = require('path');
 const child_process = require('child_process');
 
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
+interface GNUFindSettings {
 	mySetting: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
+
+const DEFAULT_SETTINGS: GNUFindSettings = {
 	mySetting: 'default'
 }
+
 
 // Define a function to do the search.
 async function search(base_directory: string, query: string) {
@@ -60,6 +60,7 @@ async function search(base_directory: string, query: string) {
 	return results;
 }
 
+
 function openFileByPath(app, path: string) {
 	// All the markdown files:
 	const files = app.vault.getMarkdownFiles();
@@ -83,14 +84,15 @@ function openFileByPath(app, path: string) {
 	}
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+
+export default class GNUFind extends Plugin {
+	settings: GNUFindSettings;
 
 	async onload() {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('search', 'GNU Find', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			new Notice('This is a notice!');
 		});
@@ -251,9 +253,11 @@ class SearchQuery extends Modal {
 
 }
 
+
 interface SearchResult {
 	path: string;
 }
+
 
 class GNUSearchResultsModal extends SuggestModal<SearchResult> {
 
