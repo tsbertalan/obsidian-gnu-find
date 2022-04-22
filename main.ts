@@ -19,21 +19,27 @@ const DEFAULT_SETTINGS: GNUFindSettings = {
 
 
 // Define a function to do the search.
-async function search(base_directory: string, query: string) {
+async function search(base_directory: string, query: string, full_text: boolean=true) {
 
 	console.log(`Searching for ${query} in ${base_directory}`);
-
 	
 	// Spawn a child process.
-	const child = child_process.spawn('/usr/bin/env', [
-		'python3',
-		'/home/tsbertalan/bin/ffg_onelineperresult.py',
-		base_directory,
-		query,
-		'md'
-	]);
-
-	
+	var child;
+	if (full_text) {
+		child = child_process.spawn('/usr/bin/env', [
+			'python3',
+			'/home/tsbertalan/bin/ffg_onelineperresult.py',
+			base_directory,
+			query,
+			'md'
+		]);
+	} else {
+		child = child_process.spawn('/usr/bin/find', [
+			base_directory,
+			'-type', 'f',
+			'-iname', `*${query}*.md`
+		]);
+	}
 
 	// Use async/await to get the results.
 	const results = await new Promise((resolve, reject) => {
@@ -92,27 +98,22 @@ export default class GNUFind extends Plugin {
 		await this.loadSettings();
 
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('search', 'GNU Find', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+		this.addRibbonIcon('search', 'GNU Find', (evt: MouseEvent) => {
+			new SearchQuery(this.app).open();
 		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
+		this.addRibbonIcon('yesterday-glyph', 'Add Day Links', (evt: MouseEvent) => {
+			child_process.spawn('/home/tsbertalan/bin/add_day_links', []);
+		});
 
 		// Search for a fixed string in markdown files.
 		this.addCommand({
 			id: 'search-markdown',
 			name: 'Search with GNU Find',
 			callback: () => {
-
-				// new Notice('Searching in markdown files...');
-
-				// Display the SearchQuery.
 				new SearchQuery(this.app).open();
+			}
+		});
 
 			}
 		});
@@ -182,9 +183,19 @@ class SearchQuery extends Modal {
 		});
 
 		// TODO: Add a checkbox to switch between filenames-only and filenames-and-contents.
+		// Add a checkbox for full-search text.
+		const full_search_checkbox = col2.createEl('input', {
+			type: 'checkbox',
+			id: 'full-search-checkbox',
+		});
+		full_search_checkbox.setAttribute('checked', true)
+		col2.createEl('label', {
+			text: 'Full text?',
+			for: 'full-search-checkbox'
+		});
 
 		// Add a search button.
-		const buttonEl = col2.createEl('button', {
+		const buttonEl = centered_holder.createEl('button', {
 			text: 'Search',
 			id: 'search-button',
 			type: 'button'
@@ -196,15 +207,16 @@ class SearchQuery extends Modal {
 
 		// Make the button try the search.
 		buttonEl.addEventListener('click', () => {
-			this.doSearch();
+			const full_search = full_search_checkbox.checked;
+			this.doSearch(full_search);
 		});
 	}
-
-	doSearch() {
-
+	
+	doSearch(full_search: boolean = true) {
+		
 		const {contentEl} = this;
 		
-		// Get the input element, which was appended to the contentEl.
+		// Get the user inputs.
 		const query = (contentEl.find('input') as HTMLInputElement).value;
 		
 		// Only do the search if the query is not empty.
@@ -216,7 +228,7 @@ class SearchQuery extends Modal {
 	
 			// Search for the query.
 			// search is an async function, so we need to use a promise.
-			search(base_directory, query).then((results) => {
+			search(base_directory, query, full_search).then((results) => {
 				// Split the result by newlines.
 				const lines = results.split('\n');
 
