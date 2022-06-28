@@ -23,7 +23,7 @@ async function search(base_directory: string, query: string, full_text: boolean=
 
 	console.log(`Searching for ${query} in ${base_directory}`);
 	
-	// Spawn a child process.
+	// Spawn a child process to search for markdown files.
 	var child;
 	if (full_text) {
 		child = child_process.spawn('/usr/bin/env', [
@@ -40,39 +40,87 @@ async function search(base_directory: string, query: string, full_text: boolean=
 			'-iname', `*${query}*.md`
 		]);
 	}
+    
+    // Spawn another non-full-text search to find PDFs searching only file names.
+    var child2 = child_process.spawn('/usr/bin/find', [
+        base_directory,
+        '-type', 'f',
+        '-iname', `*${query}*.pdf`
+    ]);
+
 
 	// Use async/await to get the results.
 	const results = await new Promise((resolve, reject) => {
-		// Listen for the 'data' event, and return that from this search function.
+
+        var child_1_resolved = false;
+        var child_2_resolved = false;
+        var multiline_data = '';
+        
+        function maybe_resolve() {
+            if (child_1_resolved && child_2_resolved) {
+                // If both children have resolved, resolve this promise.
+                if (multiline_data.length > 0) {
+                    // If the length of the multiline_data string is 0, don't slice.
+                    resolve(multiline_data);
+                } else {
+                    // Otherwise, remove the guaranteed newline at the end.
+                    resolve(multiline_data.slice(0, -1));
+                }
+            }
+        }
+
+		// Listen for the 'data' events, and return that from this search function.
 		child.stdout.on('data', (data) => {
-			// Put the results into the results object.
-			resolve(data.toString());
+            multiline_data += data.toString() + '\n';
+            child_1_resolved = true;
+
+            maybe_resolve();
 		});
+
+        child2.stdout.on('data', (data) => {
+            multiline_data += data.toString() + '\n';
+            child_2_resolved = true;
+
+            maybe_resolve();
+        });
 		
-		// Listen for the 'error' event, and print it.
+		// Listen for the 'error' events, and print it.
 		child.on('error', (err) => {
 			console.log(err);
 			reject(err);
 		});
+        child2.on('error', (err) => {
+            console.log(err);
+            reject(err);
+        });
 
-		// Listen for the 'close' event, and resolve the promise.
+		// Listen for the 'close' events, and resolve the promise.
 		child.on('close', () => {
-			resolve("");
+            child_1_resolved = true;
+            maybe_resolve();
 		});
-		
+        child2.on('close', () => {
+            child_2_resolved = true;
+            maybe_resolve();
+        });
+
 	});
 
-	// Return the results.
-	return results;
+    // Return the results.
+    return results;
 }
 
 
 function openFileByPath(app, path: string) {
 	// All the markdown files:
-	const files = app.vault.getMarkdownFiles();
-		
+	//const files = app.vault.getMarkdownFiles();
+	const files = app.vault.getFiles();
+
 	//Get just the basename of our suggestion path.
 	const basename = path2.basename(path);
+
+    // Log what we're looking for.
+    console.log(`Looking for "${basename}" in ${files.length} files.`);
 
 	// Filter for files whose "path" matches our "basename".
 	const filtered = files.filter((file) => {
@@ -89,6 +137,7 @@ function openFileByPath(app, path: string) {
 		new Notice(`Couldn't find selected file ${basename} in the vault.`);
 	}
 }
+
 
 
 export default class GNUFind extends Plugin {
@@ -154,7 +203,7 @@ class SearchQuery extends Modal {
 
 	onOpen() {
 		const {contentEl} = this;
-		const checked_text   = "Search for a string in titles and contents of markdown files.";
+		const checked_text   = "Search for a string in titles and contents of markdown files and titles of PDFs.";
 		const unchecked_text = "Search for a string in titles of markdown files.";
 
 		// Give the contentEl a minimum width.
@@ -309,9 +358,14 @@ class GNUSearchResultsModal extends SuggestModal<SearchResult> {
 
 	renderSuggestion(suggestion: SearchResult, el: HTMLElement) {
 		const basename = path2.basename(suggestion.path);
-		// Remove the final ".md" from the basename.
-		const basename_no_ext = basename.substr(0, basename.length - 3);
-		el.createEl("div", {text: basename_no_ext});
+        var basename_fixed;
+		// If the lowercase filename ends in ".md", remove the final ".md" from the basename.
+        if (basename.toLowerCase().endsWith('.md')) {
+            basename_fixed = basename.slice(0, -3);
+        } else {
+            basename_fixed = basename;
+        }
+		el.createEl("div", {text: basename_fixed});
 		// el.createEl("small", {text: suggestion.path});
 	}
 

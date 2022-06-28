@@ -1,5 +1,5 @@
 {
-	"name": "GNU Find",
+	"name": "GNUFind",
 	"version": "1.0.1",
 	"description": "This plugin uses GNU find to search for markdown files below the vault root.",
 	"main": "main.js",

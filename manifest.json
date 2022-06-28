@@ -1,6 +1,6 @@
 {
 	"id": "obsidian-gnu-find",
-	"name": "GNU Find",
+	"name": "GNUFind",
 	"version": "1.0.1",
 	"minAppVersion": "0.12.0",
 	"description": "Use GNU find to search for markdown files below the vault root.",
