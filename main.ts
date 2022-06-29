@@ -204,7 +204,7 @@ class SearchQuery extends Modal {
 	onOpen() {
 		const {contentEl} = this;
 		const checked_text   = "Search for a string in titles and contents of markdown files and titles of PDFs.";
-		const unchecked_text = "Search for a string in titles of markdown files.";
+		const unchecked_text = "Search for a string in titles of markdown and PDF files.";
 
 		// Give the contentEl a minimum width.
 		contentEl.setAttribute('style', 'min-width: 600px;');
