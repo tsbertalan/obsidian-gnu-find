@@ -1,5 +1,10 @@
 ## Obsidian GNU Find
 
+**Update!** the plugin [Omnisearch](https://github.com/scambier/obsidian-omnisearch)
+is a much better replacement for Obsidian's built-in search than this project,
+and is cross-platform (this is pretty much Linux only without hoop-jumping). Go there instead.
+
+
 Farm out markdown search to GNU Find on Linux. I dunno, maybe it will work on mac? Or Windows with like MinGW?
 
 TODO: 
